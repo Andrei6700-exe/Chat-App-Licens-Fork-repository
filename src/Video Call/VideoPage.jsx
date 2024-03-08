@@ -17,9 +17,9 @@ export default function VideoCall() {
   const friend = useRef(null);
   const you = useRef(null);
   const mute = useRef(null);
-  const VideoToggle = useRef(null); 
-  const DisconnectCall = useRef(null); 
-  const share = useRef(null);//
+  const VideoToggle = useRef(null);
+  const DisconnectCall = useRef(null);
+  const share = useRef(null); //
 
   const naviagte = useNavigate();
   let server = {
@@ -34,6 +34,9 @@ export default function VideoCall() {
   };
   let peerConnection = new RTCPeerConnection(server);
 
+  const [localstream, setLocalstream] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
+
   const init = useCallback(async () => {
     const localStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -42,7 +45,7 @@ export default function VideoCall() {
       },
       audio: true,
     });
-    
+    setLocalstream(localStream);
     console.log("created ");
     const remoteStream = new MediaStream();
     friend.current.srcObject = remoteStream;
@@ -73,7 +76,7 @@ export default function VideoCall() {
       await peerConnection.setLocalDescription(offer);
     } else {
       await peerConnection.setRemoteDescription(
-        JSON.parse((await getDoc(doc(db, "calls", roomID))).data().offer)
+        JSON.parse((await getDoc(doc(db, "calls", roomID))).data().offer),
       );
       peerConnection.onicecandidate = async (e) => {
         if (e.candidate) {
@@ -82,7 +85,7 @@ export default function VideoCall() {
           });
         }
       };
-      
+
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
     }
@@ -90,7 +93,7 @@ export default function VideoCall() {
     onSnapshot(doc(db, "calls", roomID), async (doc) => {
       if (doc.data().answer && !peerConnection.currentRemoteDescription) {
         await peerConnection.setRemoteDescription(
-          JSON.parse(doc.data().answer)
+          JSON.parse(doc.data().answer),
         );
       }
     });
